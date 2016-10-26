@@ -1,11 +1,10 @@
 library("rstan")
 
-
-genre.danceability <- subset(trackset.with.audio[, c("genres", "plays", "danceability", "artist_plays_previous_month")], !is.na(danceability) & !is.na(genres))
+genre.danceability <- read.table("data/danceability_set.csv", sep = ';', header = TRUE)
 
 top.10.genres <- tail(sort(table(genre.danceability$genres)), 10)
 
-first.set <- sample(c(0, 1), size = nrow(genre.danceability), replace = TRUE, prob = c(0.80, 0.20)) == 1
+first.set <- sample(c(0, 1), size = nrow(genre.danceability), replace = TRUE, prob = c(0.50, 0.50)) == 1
 
 model.set <- subset(genre.danceability, genres %in% names(top.10.genres) & first.set)
 
@@ -22,7 +21,7 @@ model.data <- list(
     danceability = model.set$danceability
 )
 
-plays.model <- stan_model(file = "~/github.com/jotsif/BDS/src/stan/plays.stan")
+plays.model <- stan_model(file = "src/stan/plays.stan")
 
 plays.fit <- sampling(plays.model, data = model.data, cores = 8, iter = 2000, init = 1)
 
@@ -54,17 +53,8 @@ ggplot(data = merge(data.frame(melt(posterior$beta3[, ])), genres, by.x = "Var2"
 ggsave("beta3_genre_model.pdf")
 
 
-
-ggplot(data = subset(merge(data.frame(melt(posterior$beta1[, ])), genres, by.x = "Var2", by.y = "genre.index"), genres %in% c("Rock", "Dance,Pop", "Pop,Rock")), aes(x = value, fill = factor(genres), y = ..density..))  + geom_histogram(position = "dodge")
-
-
-
-ggplot(data = model.set, aes(x = plays, simulated.plays, col = genres)) + geom_point() + scale_x_log10() + scale_y_log10()
-
 model.set$simulated.plays.95th <- exp(apply(posterior$linear_term, 2, function(i) {sort(i)[3900]}))
-
 model.set$simulated.plays.5th <- exp(apply(posterior$linear_term, 2, function(i) {sort(i)[100]}))
-
 genre.mean <- with(model.set, aggregate(simulated.plays, list(genre = factor(genres)), mean))
 
 size = 0.01
@@ -77,6 +67,3 @@ simulated.min <- with(subset(model.set, genres == plot.genre), tapply(simulated.
 actual <- with(subset(model.set, genres == plot.genre), tapply(plays, cut(danceability, breaks = quantile(danceability, probs = seq(0, 1, size))), mean))/denominator
 ggplot(data = data.frame(x = dance, y1 = simulated, y2 = actual, y1.max = simulated.max, y1.min = simulated.min), aes(x = x)) + geom_ribbon(aes(ymax = y1.max, ymin = y1.min), alpha = 0.3) + geom_line(aes(y = y1), col = rgb(95/255, 198/255, 168/255)) + geom_line(aes(y = y2), col = rgb(0/255, 60/255, 255/255), alpha = 0.2) + scale_y_log10() + xlab("Danceability") + ylab("Plays")
 ggsave(paste("danceability", plot.genre, "vs_plays.pdf", sep = "_"))
-
-
-ggplot(data = subset(model.set, genres == "Pop"), aes(x = danceability)) + geom_line(aes(y = simulated.plays), color = 2) + geom_point(aes(y = plays)) + scale_y_log10()
