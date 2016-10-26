@@ -4,7 +4,7 @@ import pandas as pd
 from ggplot import *
 import pystan
 
-incomes = pd.read_csv('../../data/DP_LIVE_17102016202817844.csv', delimiter = ',')
+incomes = pd.read_csv('data/DP_LIVE_17102016202817844.csv', delimiter = ',')
 
 ### Remove Euro area and european union, and pick USD measure
 disposable_incomes_oecd_2012 = incomes[(incomes.MEASURE == "USD_CAP") & (incomes.TIME == 2012) & (incomes.LOCATION != "EU") & (incomes.LOCATION != "EA")]
@@ -20,7 +20,7 @@ model_data = {
     'income': disposable_incomes_oecd_2012.Value
 }
 
-fit = pystan.stan(file = '../stan/mean.stan', data = model_data, chains = 4, iter = 1000)
+fit = pystan.stan(file = 'src/stan/mean.stan', data = model_data, chains = 4, iter = 1000)
 
 posterior = fit.extract()
 

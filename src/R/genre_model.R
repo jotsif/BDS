@@ -40,7 +40,7 @@ plot(log(x), log(y))
 
 genres <- unique(model.set[, c("genres", "genre.index")])
 
-ggplot(data = merge(data.frame(melt(posterior$beta0[, ])), genres, by.x = "Var2", by.y = "genre.index"), aes(x = factor(genres), y = value)) + geom_violin() + xlab("Genres") + ylab("Beta1")
+ggplot(data = merge(data.frame(melt(posterior$beta0[, ])), genres, by.x = "Var2", by.y = "genre.index"), aes(x = factor(genres), y = value)) + geom_violin() + xlab("Genres") + ylab("Beta0")
 ggsave("beta0_genre_model.pdf")
 
 ggplot(data = merge(data.frame(melt(posterior$beta1[, ])), genres, by.x = "Var2", by.y = "genre.index"), aes(x = factor(genres), y = value)) + geom_violin() + xlab("Genres") + ylab("Beta1")
